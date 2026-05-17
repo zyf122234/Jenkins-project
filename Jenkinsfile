@@ -3,7 +3,8 @@ pipeline {
 
     // 1. 激活你刚才在 Jenkins 页面配置好的 Maven 工具
     tools {
-        maven 'maven3.8'
+        maven 'maven3.8' //之前配好的Maven
+        docker 'docker-cli' // ✨ 新增这一行！告诉 Jenkins 接下来要调用你刚配的 Docker 命令
     }
 
     environment {
