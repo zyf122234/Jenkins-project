@@ -112,6 +112,8 @@ services:
   jenkins:
     # ✨ 核心修改：从极其古老的 lts-jdk11 升级到官方主推的稳定版 lts-jdk17
     image: jenkins/jenkins:lts-jdk17
+    # ✨ 就是这一行！强制让容器内的进程以 root 身份运行，彻底解决所有 Permission denied
+    user: root
     container_name: jenkins
     ports:
       - "9090:8080"
