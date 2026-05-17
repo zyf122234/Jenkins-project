@@ -32,7 +32,7 @@ services:
       MYSQL_ROOT_PASSWORD: root123
       TZ: PRC
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -110,7 +110,8 @@ services:
   # Jenkins - CI/CD 持续集成
   # ========================================
   jenkins:
-    image: jenkins/jenkins:lts-jdk11
+    # ✨ 核心修改：从极其古老的 lts-jdk11 升级到官方主推的稳定版 lts-jdk17
+    image: jenkins/jenkins:lts-jdk17
     container_name: jenkins
     ports:
       - "9090:8080"
@@ -118,14 +119,20 @@ services:
     volumes:
       - jenkins-data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+    # ✨ 核心修改 1：强制为容器指定国内的公共 DNS，破解“网络孤岛”
+    dns:
+      - 114.114.114.114
+      - 8.8.8.8
     environment:
       - JAVA_OPTS=-Xmx512m
+      # ✨ 核心修改 2：加入关闭证书校验的全局参数（防止 Java 底层报 SSL 证书不信任的错误）
+      - JENKINS_JAVA_OPTS=-Dcom.sun.jndi.ldap.object.disableMechanisms=none -Djavax.net.ssl.trustStore=NONE
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 90s # 稍微延长一点初始等待时间，给 Jenkins 留足启动和加载国内源的时间
     networks:
       - microservice-net
 

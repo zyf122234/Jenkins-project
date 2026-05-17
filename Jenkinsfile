@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    // ✨ 就是这三行，告诉 Jenkins 编译时去调用你刚刚配好的 "maven3.8"
+    tools {
+        maven 'maven3.8'
+    }
+
     environment {
         DOCKER_REGISTRY = 'docker.io'
         IMAGE_PREFIX = 'microservice-demo'
