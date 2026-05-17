@@ -52,16 +52,16 @@ pipeline {
                 echo '开始原地重启并部署微服务容器...'
                 script {
                     def services = [
-                            ['name': 'gateway-service', 'port': '8081'],
-                            ['name': 'user-service', 'port': '8082'],
-                            ['name': 'order-service', 'port': '8083']
+                            ['name': 'gateway-service', 'port': '8080'],
+                            ['name': 'user-service', 'port': '8081'],
+                            ['name': 'order-service', 'port': '8082']
                     ]
 
                     for (service in services) {
                         echo "正在重构并拉起容器: ${service.name}"
                         sh "docker stop ${service.name} || true"
                         sh "docker rm ${service.name} || true"
-                        sh "docker run -d --name ${service.name} --network ${DOCKER_NET} -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
+                        sh "docker run -d --name ${service.name} --network ${DOCKER_NET} -e SPRING_PROFILES_ACTIVE=docker -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
                     }
 
                     echo '所有服务已在宿主机原地完成平滑升级！'
