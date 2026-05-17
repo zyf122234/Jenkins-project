@@ -1,15 +1,14 @@
 pipeline {
     agent any
 
-    // 1. 激活你刚才在 Jenkins 页面配置好的 Maven 工具
     tools {
-        maven 'maven3.8' //之前配好的Maven
-        dockerTool 'docker-cli' // ✨ 修正这里：把 docker 改为 dockerTool。名字 'docker-cli' 依然对应你在网页配的名字
+        maven 'maven3.8'
+        // 依然保留它，确保 Jenkins 会在后台下载好 docker-cli 客户端
+        dockerTool 'docker-cli'
     }
 
     environment {
         IMAGE_PREFIX = 'microservice-demo'
-        // 对应你之前 docker compose 创建的微服务专用网络名称
         DOCKER_NET = 'jenkins-docker_microservice-net'
     }
 
@@ -39,46 +38,45 @@ pipeline {
             steps {
                 echo '通过挂载的 docker.sock 本地构建微服务镜像...'
                 script {
+                    // ✨ 核心修正：通过 tool 'docker-cli' 动态获取 Jenkins 下载该工具的绝对路径
+                    def dockerPath = "${tool 'docker-cli'}/bin/docker"
                     def services = ['gateway-service', 'user-service', 'order-service']
+
                     for (service in services) {
                         echo "开始构建本地镜像: ${IMAGE_PREFIX}/${service}:latest"
-                        sh "docker build -t ${IMAGE_PREFIX}/${service}:latest ./${service}/"
+                        // ✨ 使用绝对路径调用 docker 命令，彻底断绝 not found 的可能性
+                        sh "${dockerPath} build -t ${IMAGE_PREFIX}/${service}:latest ./${service}/"
                     }
                 }
             }
         }
-
-        // ✨ 删除了原本耗时且容易因网络失败的 Docker Push 阶段
-        // 因为是本地单机开发，Build 出来的镜像原地就能直接运行！
 
         stage('5. Deploy') {
             steps {
                 echo '开始原地重启并部署微服务容器...'
                 script {
+                    // ✨ 同样，在部署阶段也使用绝对路径
+                    def dockerPath = "${tool 'docker-cli'}/bin/docker"
                     def services = [
-                            ['name': 'gateway-service', 'port': '8081'], // 替换为你网关的真实端口
-                            ['name': 'user-service', 'port': '8082'],    // 替换为你用户服务的真实端口
-                            ['name': 'order-service', 'port': '8083']    // 替换为你订单服务的真实端口
+                            ['name': 'gateway-service', 'port': '8081'],
+                            ['name': 'user-service', 'port': '8082'],
+                            ['name': 'order-service', 'port': '8083']
                     ]
 
                     for (service in services) {
                         echo "正在重构并拉起容器: ${service.name}"
-                        // 1. 如果旧容器在跑，强行停止并删除它
-                        sh "docker stop ${service.name} || true"
-                        sh "docker rm ${service.name} || true"
-
-                        // 2. 将新镜像作为容器挂载到你的微服务网络中启动
-                        sh "docker run -d --name ${service.name} --network ${DOCKER_NET} -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
+                        sh "${dockerPath} stop ${service.name} || true"
+                        sh "${dockerPath} rm ${service.name} || true"
+                        sh "${dockerPath} run -d --name ${service.name} --network ${DOCKER_NET} -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
                     }
 
                     echo '所有服务已在宿主机原地完成平滑升级！'
-                    sh 'docker ps'
+                    sh "${dockerPath} ps"
                 }
             }
         }
     }
 
-    // ✨ 清理了引发 hudson.FilePath 报错的总是执行块，只留下干净的状态输出
     post {
         success {
             echo '🎉 恭喜！流水线全线亮起绿灯，微服务自动化部署成功！'
