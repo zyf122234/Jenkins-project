@@ -125,8 +125,8 @@ services:
       - 8.8.8.8
     environment:
       - JAVA_OPTS=-Xmx512m
-      # ✨ 核心修改 2：加入关闭证书校验的全局参数（防止 Java 底层报 SSL 证书不信任的错误）
-      - JENKINS_JAVA_OPTS=-Dcom.sun.jndi.ldap.object.disableMechanisms=none -Djavax.net.ssl.trustStore=NONE
+      # ✨ 修改后：删掉了后面的 -Djavax.net.ssl.trustStore=NONE，回归官方标准 SSL 证书库
+      - JENKINS_JAVA_OPTS=-Dcom.sun.jndi.ldap.object.disableMechanisms=none
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
       interval: 30s

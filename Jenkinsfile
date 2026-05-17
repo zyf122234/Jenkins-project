@@ -100,8 +100,11 @@ pipeline {
             echo '流水线执行失败！'
         }
         always {
-            echo '清理临时文件...'
-            sh 'docker image prune -f || true'
+            echo '清理工作...'
+            // 用 node 包裹，提供 FilePath 上下文
+            node {
+                sh 'docker image prune -f || true'
+            }
         }
     }
 }
