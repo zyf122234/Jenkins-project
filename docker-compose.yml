@@ -10,15 +10,15 @@ services:
       - JVM_XMS=256m
       - JVM_XMX=256m
     ports:
-      - "8848:8848"
-      - "9848:9848"
-      - "9849:9849"
+      - "8848:8848"  # HTTP
+      - "9848:9848"  # TCP
+      - "9849:9849"  # UDP
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]  # 健康检查
+      interval: 10s  # 健康检查间隔时间
+      timeout: 5s  # 健康检查超时时间
+      retries: 10  # 健康检查失败重试次数
+      start_period: 30s  # 启动时等待
     networks:
       - microservice-net
 
@@ -36,7 +36,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci  # 设置字符集
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123"]
       interval: 10s
@@ -58,9 +58,9 @@ services:
       - "8080:8080"
     depends_on:
       nacos:
-        condition: service_healthy
+        condition: service_healthy  # 依赖 nacos 服务启动
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker  # 指定环境
     networks:
       - microservice-net
 
@@ -120,12 +120,12 @@ services:
       - jenkins-data:/var/jenkins_home
       # ✨ 连通宿主机 Docker 守护进程的血管，必须要留着
       - /var/run/docker.sock:/var/run/docker.sock
-    dns:
-      - 114.114.114.114
-      - 8.8.8.8
+    dns:  # DNS
+      - 114.114.114.114  # 阿里云
+      - 8.8.8.8  # 谷歌
     environment:
       - JAVA_OPTS=-Xmx512m
-      - JENKINS_JAVA_OPTS=-Dcom.sun.jndi.ldap.object.disableMechanisms=none
+      - JENKINS_JAVA_OPTS=-Dcom.sun.jndi.ldap.object.disableMechanisms=none  # 解决健康检查失败
     # ✨ 修复健康检查：用普通的类似 /dev/tcp 检测替代 curl，防止因为没有安装 curl 导致一直不健康
     healthcheck:
       test: [ "CMD-SHELL", "timeout 5 bash -c '</dev/tcp/127.0.0.1/8080' || exit 1" ]

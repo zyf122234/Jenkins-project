@@ -18,15 +18,15 @@ spring:
           predicates:
             - Path=/api/orders/**
       default-filters:
-        - StripPrefix=0
+        - StripPrefix=0   # 去掉前缀
     nacos:
       discovery:
         server-addr: localhost:8848
       config:
         server-addr: localhost:8848
-        file-extension: yml
+        file-extension: yml  # 指定文件后缀
   config:
-    import: optional:nacos:gateway-service.yml
+    import: optional:nacos:gateway-service.yml   # 引入配置
 
 management:
   endpoints:

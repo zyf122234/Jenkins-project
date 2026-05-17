@@ -22,9 +22,11 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    // 通过 Feign 调用 user-service
     @Autowired
     private UserFeignClient userFeignClient;
 
+    // 查询所有订单
     @GetMapping
     public ResponseEntity<Map<String, Object>> findAll() {
         log.info("收到请求: 查询所有订单");

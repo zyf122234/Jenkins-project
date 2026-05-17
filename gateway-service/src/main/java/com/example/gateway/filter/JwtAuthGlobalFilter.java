@@ -27,11 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+// 全局过滤器
 @Component
 public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthGlobalFilter.class);
 
+    // 环境变量
     @Autowired
     private Environment environment;
 
@@ -40,16 +42,19 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
 
     private SecretKey secretKey;
 
+    // 不需要认证的接口
     private static final List<String> EXCLUDE_PATHS = Arrays.asList(
             "/api/auth/",
             "/actuator/"
     );
 
+    // 初始化密钥
     @PostConstruct
     public void init() {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
+    // 全局过滤器
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
@@ -99,6 +104,7 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
         }
     }
 
+    // 响应错误
     private Mono<Void> unauthorizedResponse(ServerWebExchange exchange, String message) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.UNAUTHORIZED);

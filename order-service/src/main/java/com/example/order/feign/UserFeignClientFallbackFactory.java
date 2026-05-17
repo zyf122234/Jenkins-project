@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+// 用户服务调用失败的降级处理
 @Component
 public class UserFeignClientFallbackFactory implements FallbackFactory<UserFeignClient> {
 
