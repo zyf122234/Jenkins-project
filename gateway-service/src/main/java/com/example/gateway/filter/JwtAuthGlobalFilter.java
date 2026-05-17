@@ -5,10 +5,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,6 +33,9 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthGlobalFilter.class);
 
+    @Autowired
+    private Environment environment;
+
     @Value("${jwt.secret:MicroserviceJenkinsDockerDemoSecretKey2024VeryLongAndSecure}")
     private String secret;
 
@@ -49,6 +55,12 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
+
+        // dev 环境跳过 JWT 验证，方便本地开发测试
+        if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
+            log.debug("dev 环境跳过 JWT 验证: {}", path);
+            return chain.filter(exchange);
+        }
 
         // 白名单路径跳过认证
         for (String excludePath : EXCLUDE_PATHS) {
