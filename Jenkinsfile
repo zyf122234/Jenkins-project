@@ -1,6 +1,7 @@
 pipeline {
     agent any
 
+    //全局工具
     tools {
         maven 'maven3.8' // 只保留 Maven 即可！
     }

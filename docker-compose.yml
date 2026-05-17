@@ -110,9 +110,7 @@ services:
   # Jenkins - CI/CD 持续集成
   # ========================================
   jenkins:
-    # ✨ 核心修改：从极其古老的 lts-jdk11 升级到官方主推的稳定版 lts-jdk17
     image: jenkins/jenkins:lts-jdk17
-    # ✨ 就是这一行！强制让容器内的进程以 root 身份运行，彻底解决所有 Permission denied
     user: root
     container_name: jenkins
     ports:
@@ -120,23 +118,21 @@ services:
       - "50000:50000"
     volumes:
       - jenkins-data:/var/jenkins_home
+      # ✨ 连通宿主机 Docker 守护进程的血管，必须要留着
       - /var/run/docker.sock:/var/run/docker.sock
-      # ✨ 新增下面这行：把宿主机环境的 docker 可执行文件直接送进容器的 /usr/bin 目录
-      - /usr/bin/docker:/usr/bin/docker
-    # ✨ 核心修改 1：强制为容器指定国内的公共 DNS，破解“网络孤岛”
     dns:
       - 114.114.114.114
       - 8.8.8.8
     environment:
       - JAVA_OPTS=-Xmx512m
-      # ✨ 修改后：删掉了后面的 -Djavax.net.ssl.trustStore=NONE，回归官方标准 SSL 证书库
       - JENKINS_JAVA_OPTS=-Dcom.sun.jndi.ldap.object.disableMechanisms=none
+    # ✨ 修复健康检查：用普通的类似 /dev/tcp 检测替代 curl，防止因为没有安装 curl 导致一直不健康
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      test: [ "CMD-SHELL", "timeout 5 bash -c '</dev/tcp/127.0.0.1/8080' || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 10
-      start_period: 90s # 稍微延长一点初始等待时间，给 Jenkins 留足启动和加载国内源的时间
+      retries: 5
+      start_period: 60s
     networks:
       - microservice-net
 
