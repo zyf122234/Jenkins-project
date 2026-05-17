@@ -1,0 +1,11 @@
+com\example\order\feign\UserFeignClientFallbackFactory.class
+com\example\order\service\OrderService.class
+com\example\order\controller\OrderController.class
+com\example\order\exception\GlobalExceptionHandler.class
+com\example\order\feign\UserFeignClient.class
+com\example\order\OrderApplication.class
+com\example\order\feign\UserFeignClientFallbackFactory$1.class
+com\example\order\service\impl\OrderServiceImpl.class
+com\example\order\exception\ResourceNotFoundException.class
+com\example\order\mapper\OrderMapper.class
+com\example\order\entity\Order.class

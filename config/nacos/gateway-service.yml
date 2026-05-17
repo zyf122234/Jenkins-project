@@ -1,0 +1,25 @@
+# Gateway Service Nacos 配置
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+      default-filters:
+        - StripPrefix=0
+
+# JWT 配置
+jwt:
+  secret: MicroserviceJenkinsDockerDemoSecretKey2024VeryLongAndSecure
+  expiration: 86400000
+
+logging:
+  level:
+    com.example.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
