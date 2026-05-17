@@ -119,6 +119,8 @@ services:
     volumes:
       - jenkins-data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+      # ✨ 新增下面这行：把宿主机环境的 docker 可执行文件直接送进容器的 /usr/bin 目录
+      - /usr/bin/docker:/usr/bin/docker
     # ✨ 核心修改 1：强制为容器指定国内的公共 DNS，破解“网络孤岛”
     dns:
       - 114.114.114.114

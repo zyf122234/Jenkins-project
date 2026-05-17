@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven3.8'
-        // 依然保留它，确保 Jenkins 会在后台下载好 docker-cli 客户端
-        dockerTool 'docker-cli'
+        maven 'maven3.8' // 只保留 Maven 即可！
     }
 
     environment {
@@ -36,16 +34,13 @@ pipeline {
 
         stage('4. Docker Build') {
             steps {
-                echo '通过挂载的 docker.sock 本地构建微服务镜像...'
+                echo '通过挂载的 docker 命令和 sock 本地构建微服务镜像...'
                 script {
-                    // ✨ 核心修正：通过 tool 'docker-cli' 动态获取 Jenkins 下载该工具的绝对路径
-                    def dockerPath = "${tool 'docker-cli'}/bin/docker"
                     def services = ['gateway-service', 'user-service', 'order-service']
-
                     for (service in services) {
                         echo "开始构建本地镜像: ${IMAGE_PREFIX}/${service}:latest"
-                        // ✨ 使用绝对路径调用 docker 命令，彻底断绝 not found 的可能性
-                        sh "${dockerPath} build -t ${IMAGE_PREFIX}/${service}:latest ./${service}/"
+                        // ✨ 此时直接用最纯粹的 docker 命令，它绝对能找到了！
+                        sh "docker build -t ${IMAGE_PREFIX}/${service}:latest ./${service}/"
                     }
                 }
             }
@@ -55,8 +50,6 @@ pipeline {
             steps {
                 echo '开始原地重启并部署微服务容器...'
                 script {
-                    // ✨ 同样，在部署阶段也使用绝对路径
-                    def dockerPath = "${tool 'docker-cli'}/bin/docker"
                     def services = [
                             ['name': 'gateway-service', 'port': '8081'],
                             ['name': 'user-service', 'port': '8082'],
@@ -65,13 +58,13 @@ pipeline {
 
                     for (service in services) {
                         echo "正在重构并拉起容器: ${service.name}"
-                        sh "${dockerPath} stop ${service.name} || true"
-                        sh "${dockerPath} rm ${service.name} || true"
-                        sh "${dockerPath} run -d --name ${service.name} --network ${DOCKER_NET} -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
+                        sh "docker stop ${service.name} || true"
+                        sh "docker rm ${service.name} || true"
+                        sh "docker run -d --name ${service.name} --network ${DOCKER_NET} -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
                     }
 
                     echo '所有服务已在宿主机原地完成平滑升级！'
-                    sh "${dockerPath} ps"
+                    sh "docker ps"
                 }
             }
         }
