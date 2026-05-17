@@ -49,6 +49,18 @@ pipeline {
 
         stage('5. Deploy') {
             steps {
+                echo '等待 Nacos 就绪...'
+                sh '''
+                    for i in $(seq 1 30); do
+                        if curl -sf http://nacos:8848/nacos/v1/console/health/readiness > /dev/null 2>&1; then
+                            echo "Nacos 已就绪"
+                            break
+                        fi
+                        echo "等待 Nacos 启动... ($i/30)"
+                        sleep 2
+                    done
+                '''
+
                 echo '开始原地重启并部署微服务容器...'
                 script {
                     def services = [
@@ -63,6 +75,9 @@ pipeline {
                         sh "docker rm ${service.name} || true"
                         sh "docker run -d --name ${service.name} --network ${DOCKER_NET} -e SPRING_PROFILES_ACTIVE=docker -p ${service.port}:${service.port} ${IMAGE_PREFIX}/${service.name}:latest"
                     }
+
+                    echo '等待所有服务启动...'
+                    sleep 30
 
                     echo '所有服务已在宿主机原地完成平滑升级！'
                     sh "docker ps"
