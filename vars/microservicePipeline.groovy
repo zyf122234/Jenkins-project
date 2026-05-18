@@ -95,7 +95,7 @@ def checkServiceHealth(String serviceName, int timeout = 60) {
 
     sh """
         for i in \$(seq 1 ${timeout}); do
-            if curl -sf http://localhost:${port}/actuator/health > /dev/null 2>&1; then
+            if docker exec ${serviceName} curl -sf http://localhost:${port}/actuator/health > /dev/null 2>&1; then
                 echo "${serviceName} 启动成功 (端口: ${port})"
                 exit 0
             fi
