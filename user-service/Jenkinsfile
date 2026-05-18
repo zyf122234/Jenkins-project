@@ -9,7 +9,6 @@ pipeline {
         SERVICE_PORT = '8081'
         IMAGE_PREFIX = 'microservice-demo'
         DOCKER_NET = 'microservice-demo_microservice-net'
-        WECHAT_WEBHOOK_URL = credentials('wechat-work-webhook-url')
     }
 
     stages {
@@ -69,23 +68,9 @@ pipeline {
     post {
         success {
             echo "${env.SERVICE_NAME} 构建成功！"
-            script {
-                microservicePipeline.notifyBuildSuccess(
-                    env.WECHAT_WEBHOOK_URL,
-                    [env.SERVICE_NAME],
-                    currentBuild.durationString
-                )
-            }
         }
         failure {
             echo "${env.SERVICE_NAME} 构建失败！"
-            script {
-                microservicePipeline.notifyBuildFailure(
-                    env.WECHAT_WEBHOOK_URL,
-                    "${env.SERVICE_NAME} 构建失败，请查看日志: ${env.BUILD_URL}",
-                    currentBuild.durationString
-                )
-            }
         }
     }
 }
