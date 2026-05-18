@@ -113,7 +113,9 @@ services:
   # Jenkins - CI/CD 持续集成
   # ========================================
   jenkins:
-    image: jenkins/jenkins:lts-jdk17
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
     user: root
     container_name: jenkins
     ports:
