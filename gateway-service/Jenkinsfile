@@ -12,8 +12,7 @@ pipeline {
         SERVICE_NAME = 'gateway-service'
         SERVICE_PORT = '8080'
         IMAGE_PREFIX = 'microservice-demo'
-        DOCKER_NET = 'jenkins-docker_microservice-net'
-        WECHAT_WEBHOOK_URL = credentials('wechat-work-webhook-url')
+        DOCKER_NET = 'microservice-demo_microservice-net'
     }
 
     stages {
@@ -26,45 +25,45 @@ pipeline {
 
         stage('2. Build') {
             steps {
-                echo "编译 ${SERVICE_NAME}..."
+                echo "编译 ${env.SERVICE_NAME}..."
                 script {
-                    microservicePipeline.buildService(SERVICE_NAME)
+                    microservicePipeline.buildService(env.SERVICE_NAME)
                 }
             }
         }
 
         stage('3. Test') {
             steps {
-                echo "运行 ${SERVICE_NAME} 单元测试..."
+                echo "运行 ${env.SERVICE_NAME} 单元测试..."
                 script {
-                    microservicePipeline.testService(SERVICE_NAME)
+                    microservicePipeline.testService(env.SERVICE_NAME)
                 }
             }
         }
 
         stage('4. Docker Build') {
             steps {
-                echo "构建 ${SERVICE_NAME} Docker 镜像..."
+                echo "构建 ${env.SERVICE_NAME} Docker 镜像..."
                 script {
-                    microservicePipeline.buildDockerImage(SERVICE_NAME, 'latest')
+                    microservicePipeline.buildDockerImage(env.SERVICE_NAME, 'latest')
                 }
             }
         }
 
         stage('5. Deploy') {
             steps {
-                echo "部署 ${SERVICE_NAME}..."
+                echo "部署 ${env.SERVICE_NAME}..."
                 script {
                     microservicePipeline.waitForNacos()
-                    microservicePipeline.deployService(SERVICE_NAME, env.DOCKER_NET)
+                    microservicePipeline.deployService(env.SERVICE_NAME, env.DOCKER_NET)
 
                     echo '等待服务启动...'
                     sleep 30
 
-                    microservicePipeline.checkServiceHealth(SERVICE_NAME)
+                    microservicePipeline.checkServiceHealth(env.SERVICE_NAME)
 
-                    echo "${SERVICE_NAME} 部署完成！"
-                    sh "docker ps | grep ${SERVICE_NAME}"
+                    echo "${env.SERVICE_NAME} 部署完成！"
+                    sh "docker ps | grep ${env.SERVICE_NAME}"
                 }
             }
         }
@@ -72,24 +71,10 @@ pipeline {
 
     post {
         success {
-            echo "${SERVICE_NAME} 构建成功！"
-            script {
-                microservicePipeline.notifyBuildSuccess(
-                    env.WECHAT_WEBHOOK_URL,
-                    [SERVICE_NAME],
-                    currentBuild.durationString
-                )
-            }
+            echo "${env.SERVICE_NAME} 构建成功！"
         }
         failure {
-            echo "${SERVICE_NAME} 构建失败！"
-            script {
-                microservicePipeline.notifyBuildFailure(
-                    env.WECHAT_WEBHOOK_URL,
-                    "${SERVICE_NAME} 构建失败，请查看日志: ${env.BUILD_URL}",
-                    currentBuild.durationString
-                )
-            }
+            echo "${env.SERVICE_NAME} 构建失败！"
         }
     }
 }
