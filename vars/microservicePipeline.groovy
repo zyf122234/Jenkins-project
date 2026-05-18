@@ -220,8 +220,10 @@ def notifyWeChatWork(String status, String webhookUrl, Map additionalInfo = [:])
     def jsonBody = groovy.json.JsonOutput.toJson(requestBody)
 
     echo "发送企业微信通知: ${info.title}"
+    // 使用宿主机网络执行 curl，解决容器内无法访问外网的问题
     sh """
-        curl -s -X POST '${webhookUrl}' \\
+        docker run --rm --network host curlimages/curl:latest \\
+            curl -s -X POST '${webhookUrl}' \\
             -H 'Content-Type: application/json' \\
             -d '${jsonBody}'
     """
