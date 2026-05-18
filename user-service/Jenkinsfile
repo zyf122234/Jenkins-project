@@ -4,10 +4,6 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'maven3.8'
-    }
-
     environment {
         SERVICE_NAME = 'user-service'
         SERVICE_PORT = '8081'
