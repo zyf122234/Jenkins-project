@@ -1,0 +1,95 @@
+// Gateway Service 独立流水线
+@Library('microservice-pipeline') _
+
+pipeline {
+    agent any
+
+    tools {
+        maven 'maven3.8'
+    }
+
+    environment {
+        SERVICE_NAME = 'gateway-service'
+        SERVICE_PORT = '8080'
+        IMAGE_PREFIX = 'microservice-demo'
+        DOCKER_NET = 'jenkins-docker_microservice-net'
+        WECHAT_WEBHOOK_URL = credentials('wechat-work-webhook-url')
+    }
+
+    stages {
+        stage('1. Checkout') {
+            steps {
+                echo '从 GitHub 拉取代码...'
+                checkout scm
+            }
+        }
+
+        stage('2. Build') {
+            steps {
+                echo "编译 ${SERVICE_NAME}..."
+                script {
+                    microservicePipeline.buildService(SERVICE_NAME)
+                }
+            }
+        }
+
+        stage('3. Test') {
+            steps {
+                echo "运行 ${SERVICE_NAME} 单元测试..."
+                script {
+                    microservicePipeline.testService(SERVICE_NAME)
+                }
+            }
+        }
+
+        stage('4. Docker Build') {
+            steps {
+                echo "构建 ${SERVICE_NAME} Docker 镜像..."
+                script {
+                    microservicePipeline.buildDockerImage(SERVICE_NAME, 'latest')
+                }
+            }
+        }
+
+        stage('5. Deploy') {
+            steps {
+                echo "部署 ${SERVICE_NAME}..."
+                script {
+                    microservicePipeline.waitForNacos()
+                    microservicePipeline.deployService(SERVICE_NAME, env.DOCKER_NET)
+
+                    echo '等待服务启动...'
+                    sleep 30
+
+                    microservicePipeline.checkServiceHealth(SERVICE_NAME)
+
+                    echo "${SERVICE_NAME} 部署完成！"
+                    sh "docker ps | grep ${SERVICE_NAME}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "${SERVICE_NAME} 构建成功！"
+            script {
+                microservicePipeline.notifyBuildSuccess(
+                    env.WECHAT_WEBHOOK_URL,
+                    [SERVICE_NAME],
+                    currentBuild.durationString
+                )
+            }
+        }
+        failure {
+            echo "${SERVICE_NAME} 构建失败！"
+            script {
+                microservicePipeline.notifyBuildFailure(
+                    env.WECHAT_WEBHOOK_URL,
+                    "${SERVICE_NAME} 构建失败，请查看日志: ${env.BUILD_URL}",
+                    currentBuild.durationString
+                )
+            }
+        }
+    }
+}
