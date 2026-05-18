@@ -12,7 +12,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 安装 Maven
-ARG MAVEN_VERSION=3.9.6
+ARG MAVEN_VERSION=3.9.9
 RUN curl -fsSL https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar -xz -C /opt && \
     ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
 
